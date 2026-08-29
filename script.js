@@ -411,6 +411,24 @@ function refreshWalletFilterBars() {
 }
 
 /**
+ * รีเฟรชทุกส่วนของ UI ที่ขึ้นกับรายการรายรับ/รายจ่าย (items) หรือยอดเงิน
+ * ในกระเป๋า — ลิสต์หน้าแรก, ลิสต์หน้าค้นหา, สรุปยอด, หน้ากระเป๋าเงิน,
+ * และแถบตัวกรองกระเป๋าเงินทั้งสองหน้า
+ *
+ * เรียกใช้ฟังก์ชันนี้แทนการเขียน renderList()/renderSearchList()/update()/
+ * renderWalletPage()/refreshWalletFilterBars() เรียงกันซ้ำ ๆ ทุกจุดที่มีการ
+ * เพิ่ม/ลบ/แก้ไขรายการ — ลำดับการเรียกคงที่จุดเดียว ป้องกันบั๊กแบบ "ลืมเรียก
+ * renderList() จุดใดจุดหนึ่งแล้วข้อมูลไม่อัปเดตในบางหน้า"
+ */
+function refreshTransactionViews() {
+  renderList();
+  renderSearchList();
+  update();
+  renderWalletPage();
+  refreshWalletFilterBars();
+}
+
+/**
  * ตั้งค่ากระเป๋าเงินที่ใช้กรองรายการ
  * @param {*} id
  * @param {*} targetId
@@ -498,11 +516,7 @@ function addItem() {
   const noteBtn = document.getElementById('noteToggleBtn');
   if (noteBtn) noteBtn.textContent = 'หมายเหตุ';
 
-  renderList();
-  update();
-  renderWalletPage();
-  refreshWalletFilterBars();
-  showToast('บันทึกรายการแล้ว');
+  refreshTransactionViews();
 }
 
 /**
@@ -513,11 +527,7 @@ async function deleteItem(id) {
   if (await showConfirmModal('คุณแน่ใจว่าต้องการลบรายการนี้?')) {
     App.state.items = App.state.items.filter(i => i.id !== id);
     saveLocalStorage();
-    renderList();
-    renderSearchList();
-    update();
-    renderWalletPage();
-    refreshWalletFilterBars();
+    refreshTransactionViews();
     showToast('ลบแล้ว');
   }
 }
@@ -691,11 +701,7 @@ function saveEdit() {
   };
   saveLocalStorage();
   closeModal();
-  renderList();
-  renderSearchList();
-  update();
-  renderWalletPage();
-  refreshWalletFilterBars();
+  refreshTransactionViews();
   showToast('บันทึกแล้ว');
 }
 
@@ -823,11 +829,7 @@ function importXLSX(event) {
       });
 
       saveLocalStorage();
-      renderList();
-      renderSearchList();
-      update();
-      renderWalletPage();
-      refreshWalletFilterBars();
+      refreshTransactionViews();
       showToast(`นำเข้า ${added} รายการสำเร็จ`);
     } catch (e) {
       console.error(e);
@@ -936,11 +938,8 @@ async function deleteWallet(id) {
 
   App.state.wallets = App.state.wallets.filter(w => w.id !== id);
   saveLocalStorage();
-  renderWalletPage();
   updateWalletDropdowns();
-  refreshWalletFilterBars();
-  renderList();
-  renderSearchList();
+  refreshTransactionViews();
   showToast('ลบบัญชีแล้ว');
 }
 
@@ -963,11 +962,7 @@ function doTransfer() {
   saveLocalStorage();
   document.getElementById('transferAmount').value = '';
   document.getElementById('transferNote').value = '';
-  renderWalletPage();
-  renderList();
-  renderSearchList();
-  update();
-  refreshWalletFilterBars();
+  refreshTransactionViews();
   showToast(`โอน ${amount.toLocaleString()} ฿ สำเร็จ`);
 }
 
@@ -1207,11 +1202,7 @@ function saveInstPay() {
   saveLocalStorage();
   closeInstPayModal();
   renderInstallment();
-  renderList();
-  renderSearchList();
-  update();
-  renderWalletPage();
-  refreshWalletFilterBars();
+  refreshTransactionViews();
   showToast(`บันทึกจ่าย ${qty} งวดแล้ว`);
 }
 
@@ -1436,11 +1427,7 @@ async function markBillPaid(id) {
 
   saveLocalStorage();
   renderBillsPage();
-  renderList();
-  renderSearchList();
-  update();
-  renderWalletPage();
-  refreshWalletFilterBars();
+  refreshTransactionViews();
   showToast(type === 'income' ? 'บันทึกรายรับแล้ว' : 'บันทึกการจ่ายแล้ว');
 }
 
@@ -1763,11 +1750,7 @@ async function clearAll() {
   if (App.state.items.length && await showConfirmModal('ล้างข้อมูลทั้งหมด?')) {
     App.state.items = [];
     saveLocalStorage();
-    renderList();
-    renderSearchList();
-    update();
-    renderWalletPage();
-    refreshWalletFilterBars();
+    refreshTransactionViews();
     showToast('ล้างข้อมูลแล้ว');
   }
 }
@@ -1787,11 +1770,7 @@ function initApp() {
   updateCategoryDropdown('income', 'editCategory');
 
   updateWalletDropdowns();
-  refreshWalletFilterBars();
-  renderList();
-  renderSearchList();
-  update();
-  renderWalletPage();
+  refreshTransactionViews();
 
   ['dateInput', 'instDate', 'instPayDate'].forEach(id => {
     const el = document.getElementById(id);
