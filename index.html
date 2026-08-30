@@ -15,99 +15,103 @@
 
   <div class="cover">
     <div class="cover-eyebrow">Savings Passbook</div>
-    <h1>สมุดบัญชีออมทรัพย์</h1>
-    <div class="sub">ออมตามแผน · บันทึกได้หลายรายการต่องวด</div>
+    <h1 id="coverTitle">สมุดบัญชีออมทรัพย์</h1>
+    <div class="sub">เป้าหมาย = ผลรวม % เงินเดือนสะสมของทุกเดือน</div>
     <div class="booknum mono" id="bookNumber">เล่มที่ —</div>
   </div>
 
-  <!-- GOAL SETUP -->
+  <!-- SETTINGS -->
   <div class="card">
-    <h2><span class="n">1</span> ตั้งเป้าหมายการออม</h2>
-    <label for="goalName">ชื่อเป้าหมาย</label>
-    <input type="text" id="goalName" placeholder="เช่น กองทุนฉุกเฉิน, เที่ยวญี่ปุ่น">
+    <h2><span class="n">1</span> ตั้งค่าสมุดออมเงิน</h2>
+    <label for="goalName">ชื่อสมุด (ไม่บังคับ)</label>
+    <input type="text" id="goalName" placeholder="เช่น กองทุนฉุกเฉิน, เงินออมทั่วไป">
 
-    <label for="goalTarget">ยอดเงินเป้าหมาย (บาท)</label>
-    <input type="number" id="goalTarget" min="0" step="1" placeholder="เช่น 60000">
+    <label for="goalPercent">% เงินเดือนที่ตั้งเป้าออมทุกเดือน</label>
+    <input type="number" id="goalPercent" min="1" max="100" value="10">
 
+    <div class="btn-row">
+      <button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button>
+    </div>
+  </div>
+
+  <!-- MONTH SELECT + SALARY -->
+  <div class="card">
+    <h2><span class="n">2</span> เลือกเดือน / กรอกเงินเดือน</h2>
+    <label>เดือน / ปี</label>
     <div class="row2">
-      <div>
-        <label for="goalStart">วันที่เริ่มออม</label>
-        <input type="date" id="goalStart">
-      </div>
-      <div>
-        <label for="goalEnd">วันที่ครบกำหนด</label>
-        <input type="date" id="goalEnd">
-      </div>
+      <select id="monthSelect"></select>
+      <select id="yearSelect"></select>
     </div>
 
-    <div class="row2">
-      <div>
-        <label for="goalFreq">ความถี่ในการออม</label>
-        <select id="goalFreq">
-          <option value="monthly">รายเดือน</option>
-          <option value="weekly">รายสัปดาห์</option>
-        </select>
-      </div>
-      <div>
-        <label for="goalPercent">% เงินเดือนที่แนะนำ</label>
-        <input type="number" id="goalPercent" min="1" max="100" value="10">
-      </div>
+    <label for="salaryInput">เงินเดือนของเดือนนี้ (บาท)</label>
+    <input type="number" id="salaryInput" min="0" step="1" placeholder="เช่น 30000">
+
+    <div class="suggest-box" id="suggestBox">
+      กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span id="pctLabel">10</span>%)
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" id="saveGoalBtn">บันทึกแผนการออม</button>
-      <button class="btn btn-ghost hidden" id="editGoalBtn">แก้ไขแผน</button>
+      <button class="btn btn-primary" id="saveSalaryBtn">บันทึกเงินเดือนเดือนนี้</button>
+      <button class="btn btn-danger btn-sm" id="deleteMonthBtn">ลบข้อมูลเดือนนี้</button>
     </div>
-    <div class="empty-note" id="goalError" style="color:var(--danger); display:none;"></div>
+  </div>
+
+  <!-- RECORDS FOR SELECTED MONTH -->
+  <div class="card">
+    <h2><span class="n">3</span> บันทึกรายการออมของเดือนนี้</h2>
+    <label>รายการที่ออมแล้วในเดือนนี้</label>
+    <div class="record-list" id="recordList">
+      <div class="empty-msg">ยังไม่มีรายการในเดือนนี้</div>
+    </div>
+
+    <label style="margin-top:12px;">เพิ่มรายการออม</label>
+    <div class="add-record-row">
+      <input type="date" id="recordDate">
+      <input type="number" id="recordAmount" min="0" step="1" placeholder="จำนวนบาท">
+      <button class="btn btn-primary btn-sm" id="addRecordBtn">+ เพิ่ม</button>
+    </div>
   </div>
 
   <!-- SUMMARY -->
   <div class="card hidden" id="summaryCard">
-    <h2><span class="n">2</span> ความคืบหน้า</h2>
+    <h2><span class="n">4</span> ความคืบหน้าสะสม</h2>
     <div class="balance-figure mono" id="sumSaved">฿0</div>
-    <div class="balance-label">ออมสะสมแล้ว จากเป้าหมาย <span id="sumTarget" class="mono">฿0</span></div>
+    <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
 
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     <span class="status-pill" id="statusPill">—</span>
 
     <div class="stat-grid">
       <div class="stat-box">
-        <div class="v mono" id="statPerPeriod">฿0</div>
-        <div class="l">ยอดออม/งวด ตามแผน</div>
-      </div>
-      <div class="stat-box">
-        <div class="v mono" id="statPeriodsLeft">0</div>
-        <div class="l">งวดที่เหลือ</div>
-      </div>
-      <div class="stat-box">
-        <div class="v mono" id="statDone">0</div>
-        <div class="l">งวดที่มีการออมแล้ว</div>
+        <div class="v mono" id="statMonthsCount">0</div>
+        <div class="l">เดือนที่มีข้อมูล</div>
       </div>
       <div class="stat-box">
         <div class="v mono" id="statRemainAmt">฿0</div>
-        <div class="l">ยอดที่ยังขาดอยู่</div>
+        <div class="l">ยอดที่ยังขาด / เกินเป้าหมาย</div>
       </div>
     </div>
   </div>
 
   <!-- LEDGER -->
   <div class="card hidden" id="ledgerCard">
-    <h2><span class="n">3</span> สมุดรายการออม</h2>
+    <h2><span class="n">5</span> สมุดรายการรายเดือน</h2>
     <div class="ledger-head">
-      <div>งวด</div><div>ครบกำหนด / แผน</div><div style="text-align:right">ออมรวม / สะสม</div><div></div>
+      <div>เดือน</div><div>เงินเดือน / เป้าหมาย</div><div style="text-align:right">ออมรวม / สะสม</div><div></div>
     </div>
     <div id="ledgerBody"></div>
   </div>
 
   <!-- OVERVIEW TABLE -->
   <div class="card hidden" id="overviewCard">
-    <h2><span class="n">4</span> ภาพรวมทุกงวด</h2>
+    <h2><span class="n">6</span> ภาพรวมทุกเดือน</h2>
     <div style="overflow-x:auto;">
       <table class="overview-table">
         <thead>
           <tr>
-            <th>งวด</th>
-            <th class="text-right">แผน</th>
+            <th>เดือน</th>
+            <th class="text-right">เงินเดือน</th>
+            <th class="text-right">เป้าหมาย</th>
             <th class="text-right">ออมจริง</th>
             <th class="text-right">%</th>
           </tr>
@@ -119,15 +123,15 @@
 
   <!-- CHART -->
   <div class="card hidden" id="chartCard">
-    <h2><span class="n">5</span> กราฟเปรียบเทียบ</h2>
+    <h2><span class="n">7</span> กราฟเปรียบเทียบรายเดือน</h2>
     <div class="chart-container">
       <canvas id="chartCanvas"></canvas>
     </div>
   </div>
 
   <!-- DATA TOOLS -->
-  <div class="card hidden" id="dataCard">
-    <h2><span class="n">6</span> จัดการข้อมูล</h2>
+  <div class="card" id="dataCard">
+    <h2><span class="n">8</span> จัดการข้อมูล</h2>
     <div class="footer-row">
       <button class="btn btn-gold btn-sm" id="exportBtn">ส่งออกเป็นไฟล์ (JSON)</button>
       <button class="btn btn-ghost btn-sm" id="importBtn">นำเข้าไฟล์</button>
@@ -136,36 +140,6 @@
     </div>
   </div>
 
-</div>
-
-<!-- Record modal -->
-<div class="overlay" id="recordOverlay">
-  <div class="modal">
-    <h3 id="modalTitle">บันทึกการออม</h3>
-    <div class="period-sub" id="modalSub"></div>
-
-    <label for="salaryInput">เงินเดือนงวดนี้ (บาท) — ใช้อ้างอิงคำนวณ %</label>
-    <input type="number" id="salaryInput" min="0" step="1" placeholder="กรอกเงินเดือนของงวดนี้">
-    <div class="suggest-box" id="suggestBox">
-      กรอกเงินเดือนเพื่อดูยอดแนะนำ (<span id="pctLabel">10</span>%)
-    </div>
-
-    <label style="margin-top:16px;">รายการที่ออมแล้วในงวดนี้</label>
-    <div class="record-list" id="recordList">
-      <div class="empty-msg">ยังไม่มีรายการในงวดนี้</div>
-    </div>
-
-    <label style="margin-top:12px;">เพิ่มรายการออม</label>
-    <div class="add-record-row">
-      <input type="date" id="recordDate">
-      <input type="number" id="recordAmount" min="0" step="1" placeholder="จำนวนบาท">
-      <button class="btn btn-primary btn-sm" id="addRecordBtn">+ เพิ่ม</button>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="closeModalBtn">ปิด</button>
-    </div>
-  </div>
 </div>
 
 <script src="script.js"></script>
