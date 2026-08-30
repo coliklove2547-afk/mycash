@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -133,10 +134,17 @@
   <div class="card" id="dataCard">
     <h2><span class="n">8</span> จัดการข้อมูล</h2>
     <div class="footer-row">
-      <button class="btn btn-gold btn-sm" id="exportBtn">ส่งออกเป็นไฟล์ (JSON)</button>
-      <button class="btn btn-ghost btn-sm" id="importBtn">นำเข้าไฟล์</button>
+      <button class="btn btn-ghost btn-sm" id="refreshBtn">🔄 รีเฟรชข้อมูล</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn btn-gold btn-sm" id="exportJsonBtn">ส่งออก JSON</button>
+      <button class="btn btn-gold btn-sm" id="exportCsvBtn">ส่งออก CSV</button>
+      <button class="btn btn-gold btn-sm" id="exportXlsxBtn">ส่งออก Excel (.xlsx)</button>
+    </div>
+    <div class="footer-row">
+      <button class="btn btn-ghost btn-sm" id="importBtn">นำเข้าไฟล์ (.json / .csv / .xlsx)</button>
       <button class="btn btn-danger btn-sm" id="resetBtn">ล้างข้อมูลทั้งหมด</button>
-      <input type="file" id="importFile" accept="application/json">
+      <input type="file" id="importFile" accept=".json,.csv,.xlsx,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
     </div>
   </div>
 

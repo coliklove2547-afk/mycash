@@ -393,25 +393,39 @@
     setTimeout(()=> wrap.remove(), 650);
   }
 
-  // ---------- data tools ----------
-  document.getElementById('exportBtn').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'savings-passbook-' + (state.settings.name ? state.settings.name.replace(/\s+/g,'_') : 'data') + '.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  // ---------- refresh ----------
+  document.getElementById('refreshBtn').addEventListener('click', ()=>{
+    const sel = currentMonthKey();
+    load();
+    renderSettings();
+    populateDropdowns(sel);
+    renderMonthCard();
+    renderSummaryAndLists();
   });
 
-  document.getElementById('importBtn').addEventListener('click', ()=>{
-    document.getElementById('importFile').click();
+  // ---------- data tools: JSON ----------
+  document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    downloadBlob(blob, baseFilename() + '.json');
   });
-  document.getElementById('importFile').addEventListener('change', (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
+
+  function applyImportedState(newSettings, newMonths){
+    if(confirm('นำเข้าไฟล์นี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด ยืนยันหรือไม่?')){
+      state.settings = Object.assign({name:'', percent:10}, newSettings || {});
+      state.months = newMonths || {};
+      Object.keys(state.months).forEach(k=>{
+        if(!Array.isArray(state.months[k].records)) state.months[k].records = [];
+      });
+      save();
+      const sel = document.getElementById('monthSelect').value;
+      populateDropdowns(sel);
+      renderSettings();
+      renderMonthCard();
+      renderSummaryAndLists();
+    }
+  }
+
+  function importJsonFile(file){
     const reader = new FileReader();
     reader.onload = ()=>{
       try{
@@ -419,25 +433,134 @@
         if(!parsed || typeof parsed !== 'object' || !('months' in parsed)){
           throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
         }
-        if(confirm('นำเข้าไฟล์นี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด ยืนยันหรือไม่?')){
-          state.settings = Object.assign({name:'', percent:10}, parsed.settings || {});
-          state.months = parsed.months || {};
-          Object.keys(state.months).forEach(k=>{
-            if(!Array.isArray(state.months[k].records)) state.months[k].records = [];
-          });
-          save();
-          const sel = document.getElementById('monthSelect').value;
-          populateDropdowns(sel);
-          renderSettings();
-          renderMonthCard();
-          renderSummaryAndLists();
-        }
+        applyImportedState(parsed.settings, parsed.months);
       }catch(err){
-        alert('ไม่สามารถนำเข้าไฟล์ได้: ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ที่ส่งออกจากแอปนี้');
+        alert('ไม่สามารถนำเข้าไฟล์ JSON ได้: ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ที่ส่งออกจากแอปนี้');
       }
-      e.target.value = '';
     };
     reader.readAsText(file);
+  }
+
+  // ---------- data tools: CSV / XLSX (via SheetJS) ----------
+  const SHEET_NAME = 'สมุดออมเงิน';
+  const HEADER_ROW = ['เดือน (YYYY-MM)', 'เงินเดือน', 'วันที่ออม (YYYY-MM-DD)', 'จำนวนเงิน'];
+
+  function baseFilename(){
+    return 'savings-passbook-' + (state.settings.name ? state.settings.name.replace(/\s+/g,'_') : 'data');
+  }
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function checkSheetLib(){
+    if(typeof XLSX === 'undefined'){
+      alert('ไม่สามารถโหลดไลบรารีสำหรับไฟล์ CSV/Excel ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+      return false;
+    }
+    return true;
+  }
+  function buildSheetAOA(){
+    const rows = [];
+    rows.push(['ชื่อสมุด', state.settings.name || '']);
+    rows.push(['เปอร์เซ็นต์', state.settings.percent]);
+    rows.push([]);
+    rows.push(HEADER_ROW);
+    Object.keys(state.months).sort().forEach(key=>{
+      const m = state.months[key];
+      const salary = (isFinite(m.salary) && m.salary !== null) ? m.salary : '';
+      if(m.records && m.records.length){
+        m.records.forEach((r, idx)=>{
+          rows.push([key, idx === 0 ? salary : '', r.date, r.amount]);
+        });
+      } else {
+        rows.push([key, salary, '', '']);
+      }
+    });
+    return rows;
+  }
+  function exportSheet(bookType){
+    if(!checkSheetLib()) return;
+    const ws = XLSX.utils.aoa_to_sheet(buildSheetAOA());
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME);
+    XLSX.writeFile(wb, baseFilename() + '.' + bookType, { bookType });
+  }
+  function excelSerialToIso(serial){
+    const parsed = XLSX.SSF && XLSX.SSF.parse_date_code ? XLSX.SSF.parse_date_code(serial) : null;
+    if(!parsed) return todayIso();
+    return parsed.y + '-' + String(parsed.m).padStart(2,'0') + '-' + String(parsed.d).padStart(2,'0');
+  }
+  function parseSheetAOA(aoa){
+    let name = '', percent = 10, headerIdx = -1;
+    for(let i=0;i<aoa.length;i++){
+      const row = aoa[i];
+      if(!row || row.length === 0) continue;
+      const c0 = String(row[0]).trim();
+      if(c0 === 'ชื่อสมุด'){ name = row[1] != null ? String(row[1]) : ''; }
+      else if(c0 === 'เปอร์เซ็นต์'){ const p = parseFloat(row[1]); if(isFinite(p) && p > 0) percent = p; }
+      else if(c0.indexOf('เดือน') === 0){ headerIdx = i; break; }
+    }
+    if(headerIdx === -1) throw new Error('ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ที่ขึ้นต้นด้วย "เดือน")');
+
+    const months = {};
+    for(let i=headerIdx+1;i<aoa.length;i++){
+      const row = aoa[i];
+      if(!row || row.length === 0) continue;
+      const key = String(row[0] || '').trim();
+      if(!/^\d{4}-\d{2}$/.test(key)) continue;
+      if(!months[key]) months[key] = { salary:null, records:[] };
+
+      const salaryVal = row[1];
+      if(salaryVal !== '' && salaryVal !== undefined && salaryVal !== null && isFinite(parseFloat(salaryVal))){
+        months[key].salary = parseFloat(salaryVal);
+      }
+      const dateVal = row[2];
+      const amtVal = row[3];
+      if(dateVal !== '' && dateVal !== undefined && dateVal !== null &&
+         amtVal !== '' && amtVal !== undefined && amtVal !== null && isFinite(parseFloat(amtVal))){
+        const dateStr = (typeof dateVal === 'number') ? excelSerialToIso(dateVal) : String(dateVal).trim();
+        months[key].records.push({ date: dateStr, amount: parseFloat(amtVal) });
+      }
+    }
+    return { settings: { name, percent }, months };
+  }
+  function importSheetFile(file){
+    if(!checkSheetLib()) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
+        const { settings, months } = parseSheetAOA(aoa);
+        applyImportedState(settings, months);
+      }catch(err){
+        alert('ไม่สามารถนำเข้าไฟล์ได้: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById('exportCsvBtn').addEventListener('click', ()=> exportSheet('csv'));
+  document.getElementById('exportXlsxBtn').addEventListener('click', ()=> exportSheet('xlsx'));
+
+  document.getElementById('importBtn').addEventListener('click', ()=>{
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if(ext === 'json') importJsonFile(file);
+    else if(ext === 'csv' || ext === 'xlsx') importSheetFile(file);
+    else alert('รองรับเฉพาะไฟล์ .json, .csv, .xlsx เท่านั้น');
+    e.target.value = '';
   });
 
   document.getElementById('resetBtn').addEventListener('click', ()=>{
