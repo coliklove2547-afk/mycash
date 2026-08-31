@@ -77,7 +77,6 @@ body{
 
 /* Cards */
 .card{
-  scroll-margin-top: 14px;
   background:var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -178,7 +177,8 @@ input:focus, select:focus{ outline:2px solid var(--forest); outline-offset:1px; 
 .text-right{ text-align:right; }
 
 /* Chart */
-.chart-container{ height:240px; margin-top:4px; }
+.chart-container{ height:240px; margin-top:4px; display:flex; align-items:center; justify-content:center; }
+.chart-container .empty-note{ text-align:center; }
 
 .suggest-box{
   margin-top:8px; background:#F4F1E2; border-radius:8px; padding:10px 12px; font-size:13px;
@@ -226,3 +226,44 @@ input:focus, select:focus{ outline:2px solid var(--forest); outline-offset:1px; 
 @media (prefers-reduced-motion: reduce){
   .stamp-mark{ animation:none; opacity:.95; transform:scale(1) rotate(-12deg); }
 }
+
+/* Themed select dropdowns */
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  background-color:#fff;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%231B4332' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position: right 12px center;
+  padding-right:32px;
+  cursor:pointer;
+}
+select:hover{ border-color:var(--forest); }
+
+/* Themed alert / confirm modal */
+.app-modal-overlay{
+  position:fixed; inset:0; background:rgba(18,46,34,0.55); display:flex;
+  align-items:center; justify-content:center; padding:24px; z-index:100;
+}
+.app-modal{
+  background:var(--card); border-radius:12px; padding:24px 22px 20px;
+  width:100%; max-width:340px; text-align:center;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+  border-top:4px solid var(--gold);
+  animation: modalpop .18s ease-out;
+}
+@keyframes modalpop{
+  from{ transform:scale(0.94); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
+}
+.app-modal-icon{
+  width:40px; height:40px; margin:0 auto 12px; border-radius:50%;
+  background:var(--gold); color:#2b2004; font-family:'JetBrains Mono',monospace;
+  font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center;
+}
+.app-modal-message{
+  font-size:14px; color:var(--ink); line-height:1.6; margin:0 0 18px; white-space:pre-line;
+}
+.app-modal-actions{ display:flex; gap:8px; justify-content:center; }
+.app-modal-actions .btn{ flex:1; }

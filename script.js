@@ -1,4 +1,46 @@
 (function(){
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- themed alert / confirm (replaces native alert/confirm) ----------
+  function showAppAlert(message){
+    return new Promise(resolve=>{
+      $('appModalMessage').textContent = message;
+      $('appModalIcon').textContent = '!';
+      $('appModalCancelBtn').classList.add('hidden');
+      $('appModalOkBtn').textContent = 'ตกลง';
+      const overlay = $('appModalOverlay');
+      overlay.classList.remove('hidden');
+      const okBtn = $('appModalOkBtn');
+      const onOk = ()=>{ cleanup(); resolve(true); };
+      function cleanup(){
+        overlay.classList.add('hidden');
+        okBtn.removeEventListener('click', onOk);
+      }
+      okBtn.addEventListener('click', onOk);
+    });
+  }
+  function showAppConfirm(message){
+    return new Promise(resolve=>{
+      $('appModalMessage').textContent = message;
+      $('appModalIcon').textContent = '?';
+      $('appModalCancelBtn').classList.remove('hidden');
+      $('appModalOkBtn').textContent = 'ยืนยัน';
+      const overlay = $('appModalOverlay');
+      overlay.classList.remove('hidden');
+      const okBtn = $('appModalOkBtn');
+      const cancelBtn = $('appModalCancelBtn');
+      function cleanup(){
+        overlay.classList.add('hidden');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+      }
+      const onOk = ()=>{ cleanup(); resolve(true); };
+      const onCancel = ()=>{ cleanup(); resolve(false); };
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+    });
+  }
+
   const LS_KEY = 'savingsPassbookData_v3';
   const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
@@ -80,10 +122,10 @@
     return Array.from(years).sort((a,b)=>a-b);
   }
   function currentMonthKey(){
-    return document.getElementById('monthSelect').value;
+    return $('monthSelect').value;
   }
   function populateDropdowns(selectedMonth){
-    const yearSelect = document.getElementById('yearSelect');
+    const yearSelect = $('yearSelect');
     const years = getAvailableYears();
     const cy = new Date().getFullYear();
     yearSelect.innerHTML = '';
@@ -101,8 +143,8 @@
     populateMonths(selectedMonth);
   }
   function populateMonths(selectedMonth){
-    const monthSelect = document.getElementById('monthSelect');
-    const year = parseInt(document.getElementById('yearSelect').value,10);
+    const monthSelect = $('monthSelect');
+    const year = parseInt($('yearSelect').value,10);
     monthSelect.innerHTML = '';
     for(let m=1;m<=12;m++){
       const key = year + '-' + String(m).padStart(2,'0');
@@ -127,12 +169,12 @@
 
   // ---------- rendering ----------
   function renderSettings(){
-    document.getElementById('goalName').value = state.settings.name || '';
-    document.getElementById('goalPercent').value = state.settings.percent;
-    document.getElementById('pctLabel').textContent = state.settings.percent;
-    document.getElementById('coverTitle').textContent = state.settings.name || 'สมุดบัญชีออมทรัพย์';
+    $('goalName').value = state.settings.name || '';
+    $('goalPercent').value = state.settings.percent;
+    document.querySelectorAll('.pct-value').forEach(el => el.textContent = state.settings.percent);
+    $('coverTitle').textContent = state.settings.name || 'สมุดบัญชีออมทรัพย์';
     const keys = activeMonthKeys();
-    document.getElementById('bookNumber').textContent = keys.length
+    $('bookNumber').textContent = keys.length
       ? ('เล่มที่ ' + keys[0].replace('-',''))
       : 'เล่มที่ —';
   }
@@ -140,26 +182,29 @@
   function renderMonthCard(){
     const key = currentMonthKey();
     const m = state.months[key];
-    document.getElementById('salaryInput').value = (m && isFinite(m.salary) && m.salary !== null) ? m.salary : '';
+    $('salaryInput').value = (m && isFinite(m.salary) && m.salary !== null) ? m.salary : '';
     updateSuggestBox();
     renderRecordList();
   }
 
   function updateSuggestBox(){
-    const salary = parseFloat(document.getElementById('salaryInput').value);
-    const box = document.getElementById('suggestBox');
-    const pct = state.settings.percent;
+    const salary = parseFloat($('salaryInput').value);
+    const emptyEl = $('suggestEmpty');
+    const filledEl = $('suggestFilled');
     if(isFinite(salary) && salary > 0){
-      const suggested = salary * (pct/100);
-      box.innerHTML = 'เป้าหมายของเดือนนี้ (' + pct + '%): <b class="mono">' + fmt(suggested) + '</b>';
+      const suggested = salary * (state.settings.percent/100);
+      $('suggestedAmount').textContent = fmt(suggested);
+      emptyEl.classList.add('hidden');
+      filledEl.classList.remove('hidden');
     } else {
-      box.innerHTML = 'กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span id="pctLabel">'+pct+'</span>%)';
+      emptyEl.classList.remove('hidden');
+      filledEl.classList.add('hidden');
     }
   }
 
   function renderRecordList(){
     const key = currentMonthKey();
-    const list = document.getElementById('recordList');
+    const list = $('recordList');
     const records = (state.months[key] && state.months[key].records) || [];
     if(records.length === 0){
       list.innerHTML = '<div class="empty-msg">ยังไม่มีรายการในเดือนนี้</div>';
@@ -173,8 +218,9 @@
       </div>
     `).join('');
     list.querySelectorAll('.del-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        if(confirm('ลบรายการนี้ใช่ไหม?')){
+      btn.addEventListener('click', async ()=>{
+        const ok = await showAppConfirm('ลบรายการนี้ใช่ไหม?');
+        if(ok){
           const idx = parseInt(btn.dataset.idx,10);
           const m = ensureMonth(key);
           m.records.splice(idx,1);
@@ -193,15 +239,15 @@
     const saved = totalSaved();
     const remain = target - saved;
 
-    document.getElementById('sumSaved').textContent = fmt(saved);
-    document.getElementById('sumTarget').textContent = fmt(target);
-    document.getElementById('statMonthsCount').textContent = keys.length;
-    document.getElementById('statRemainAmt').textContent = (remain >= 0 ? fmt(remain) : ('เกิน ' + fmt(-remain)));
+    $('sumSaved').textContent = fmt(saved);
+    $('sumTarget').textContent = fmt(target);
+    $('statMonthsCount').textContent = keys.length;
+    $('statRemainAmt').textContent = (remain >= 0 ? fmt(remain) : ('เกิน ' + fmt(-remain)));
 
     const pctBar = target > 0 ? Math.min(100, (saved/target)*100) : 0;
-    document.getElementById('progressFill').style.width = pctBar.toFixed(1) + '%';
+    $('progressFill').style.width = pctBar.toFixed(1) + '%';
 
-    const pill = document.getElementById('statusPill');
+    const pill = $('statusPill');
     if(target === 0){
       pill.textContent = 'กรอกเงินเดือนเพื่อเริ่มตั้งเป้าหมาย';
       pill.className = 'status-pill status-empty';
@@ -225,7 +271,7 @@
   }
 
   function renderLedger(keys){
-    const body = document.getElementById('ledgerBody');
+    const body = $('ledgerBody');
     body.innerHTML = '';
     if(keys.length === 0){
       body.innerHTML = '<div class="empty-note">ยังไม่มีข้อมูล กรุณากรอกเงินเดือนหรือเพิ่มรายการออมในหน้าหลักก่อน</div>';
@@ -261,7 +307,7 @@
   }
 
   function renderOverview(keys){
-    const tbody = document.getElementById('overviewTableBody');
+    const tbody = $('overviewTableBody');
     if(keys.length === 0){
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">ยังไม่มีข้อมูล</td></tr>';
       return;
@@ -284,8 +330,15 @@
   }
 
   function renderChart(keys){
-    const canvas = document.getElementById('chartCanvas');
-    if(!canvas || typeof Chart === 'undefined') return;
+    const canvas = $('chartCanvas');
+    const fallback = $('chartFallback');
+    if(typeof Chart === 'undefined'){
+      if(canvas) canvas.classList.add('hidden');
+      if(fallback) fallback.classList.remove('hidden');
+      return;
+    }
+    if(canvas) canvas.classList.remove('hidden');
+    if(fallback) fallback.classList.add('hidden');
     const ctx = canvas.getContext('2d');
     const labels = keys.map(monthLabel);
     const targets = keys.map(k => Math.round(monthTarget(k)));
@@ -314,38 +367,41 @@
 
   function selectMonth(key){
     const y = key.split('-')[0];
-    document.getElementById('yearSelect').value = y;
+    $('yearSelect').value = y;
     populateMonths(key);
     renderMonthCard();
     showPage('pageHome');
   }
 
   // ---------- events ----------
-  document.getElementById('saveSettingsBtn').addEventListener('click', ()=>{
-    const name = document.getElementById('goalName').value.trim();
-    const percent = parseFloat(document.getElementById('goalPercent').value);
+  $('saveSettingsBtn').addEventListener('click', ()=>{
+    const name = $('goalName').value.trim();
+    let percent = parseFloat($('goalPercent').value);
+    if(!isFinite(percent) || percent <= 0) percent = 10;
+    percent = Math.min(100, Math.max(1, percent));
     state.settings.name = name;
-    state.settings.percent = (isFinite(percent) && percent > 0) ? percent : 10;
+    state.settings.percent = percent;
+    $('goalPercent').value = percent;
     save();
     renderSettings();
     renderMonthCard();
     renderSummaryAndLists();
   });
 
-  document.getElementById('yearSelect').addEventListener('change', ()=>{
-    const sel = document.getElementById('monthSelect').value;
+  $('yearSelect').addEventListener('change', ()=>{
+    const sel = $('monthSelect').value;
     populateMonths(sel);
     renderMonthCard();
   });
-  document.getElementById('monthSelect').addEventListener('change', renderMonthCard);
+  $('monthSelect').addEventListener('change', renderMonthCard);
 
-  document.getElementById('salaryInput').addEventListener('input', updateSuggestBox);
+  $('salaryInput').addEventListener('input', updateSuggestBox);
 
-  document.getElementById('saveSalaryBtn').addEventListener('click', ()=>{
+  $('saveSalaryBtn').addEventListener('click', ()=>{
     const key = currentMonthKey();
-    const val = parseFloat(document.getElementById('salaryInput').value);
+    const val = parseFloat($('salaryInput').value);
     if(!isFinite(val) || val < 0){
-      alert('กรุณากรอกเงินเดือนที่ถูกต้อง');
+      showAppAlert('กรุณากรอกเงินเดือนที่ถูกต้อง');
       return;
     }
     const m = ensureMonth(key);
@@ -355,13 +411,14 @@
     renderSummaryAndLists();
   });
 
-  document.getElementById('deleteMonthBtn').addEventListener('click', ()=>{
+  $('deleteMonthBtn').addEventListener('click', async ()=>{
     const key = currentMonthKey();
     if(!hasData(key)){
-      alert('เดือนนี้ยังไม่มีข้อมูลให้ลบ');
+      showAppAlert('เดือนนี้ยังไม่มีข้อมูลให้ลบ');
       return;
     }
-    if(confirm('ลบข้อมูลเดือน ' + monthLabel(key) + ' ทั้งหมดใช่ไหม?')){
+    const ok = await showAppConfirm('ลบข้อมูลเดือน ' + monthLabel(key) + ' ทั้งหมดใช่ไหม?');
+    if(ok){
       delete state.months[key];
       save();
       populateMonths(key);
@@ -370,18 +427,18 @@
     }
   });
 
-  document.getElementById('addRecordBtn').addEventListener('click', ()=>{
+  $('addRecordBtn').addEventListener('click', ()=>{
     const key = currentMonthKey();
-    const date = document.getElementById('recordDate').value || todayIso();
-    const amount = parseFloat(document.getElementById('recordAmount').value);
+    const date = $('recordDate').value || todayIso();
+    const amount = parseFloat($('recordAmount').value);
     if(!isFinite(amount) || amount <= 0){
-      alert('กรุณากรอกจำนวนเงินที่ถูกต้อง (มากกว่า 0)');
+      showAppAlert('กรุณากรอกจำนวนเงินที่ถูกต้อง (มากกว่า 0)');
       return;
     }
     const m = ensureMonth(key);
     m.records.push({ date, amount });
     save();
-    document.getElementById('recordAmount').value = '';
+    $('recordAmount').value = '';
     renderRecordList();
     renderSummaryAndLists();
     populateMonths(key);
@@ -397,26 +454,29 @@
   }
 
   // ---------- tab navigation ----------
-  const PAGE_IDS = ['pageHome', 'pageProgress', 'pageSummary', 'pageSettings'];
+  const PAGE_IDS = ['pageHome', 'pageSummary', 'pageSettings'];
   function showPage(pageId){
     PAGE_IDS.forEach(id=>{
-      document.getElementById(id).classList.toggle('hidden', id !== pageId);
+      $(id).classList.toggle('hidden', id !== pageId);
     });
     document.querySelectorAll('.tab-btn').forEach(btn=>{
       btn.classList.toggle('active', btn.dataset.page === pageId);
     });
+    if(pageId === 'pageSummary' && chartInstance){
+      requestAnimationFrame(()=> chartInstance.resize());
+    }
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
   function initTabNav(){
     document.querySelectorAll('.tab-btn').forEach(btn=>{
       btn.addEventListener('click', ()=> showPage(btn.dataset.page));
     });
-    document.getElementById('gotoSettingsBtn').addEventListener('click', ()=> showPage('pageSettings'));
+    $('gotoSettingsBtn').addEventListener('click', ()=> showPage('pageSettings'));
     showPage('pageHome');
   }
 
   // ---------- refresh ----------
-  document.getElementById('refreshBtn').addEventListener('click', ()=>{
+  $('refreshBtn').addEventListener('click', ()=>{
     const sel = currentMonthKey();
     load();
     renderSettings();
@@ -426,20 +486,28 @@
   });
 
   // ---------- data tools: JSON ----------
-  document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
+  $('exportJsonBtn').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
     downloadBlob(blob, baseFilename() + '.json');
   });
 
-  function applyImportedState(newSettings, newMonths){
-    if(confirm('นำเข้าไฟล์นี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด ยืนยันหรือไม่?')){
+  function clampPercent(p){
+    const n = parseFloat(p);
+    if(!isFinite(n) || n <= 0) return 10;
+    return Math.min(100, Math.max(1, n));
+  }
+
+  async function applyImportedState(newSettings, newMonths){
+    const ok = await showAppConfirm('นำเข้าไฟล์นี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด ยืนยันหรือไม่?');
+    if(ok){
       state.settings = Object.assign({name:'', percent:10}, newSettings || {});
+      state.settings.percent = clampPercent(state.settings.percent);
       state.months = newMonths || {};
       Object.keys(state.months).forEach(k=>{
         if(!Array.isArray(state.months[k].records)) state.months[k].records = [];
       });
       save();
-      const sel = document.getElementById('monthSelect').value;
+      const sel = $('monthSelect').value;
       populateDropdowns(sel);
       renderSettings();
       renderMonthCard();
@@ -457,7 +525,7 @@
         }
         applyImportedState(parsed.settings, parsed.months);
       }catch(err){
-        alert('ไม่สามารถนำเข้าไฟล์ JSON ได้: ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ที่ส่งออกจากแอปนี้');
+        showAppAlert('ไม่สามารถนำเข้าไฟล์ JSON ได้: ไฟล์อาจเสียหายหรือไม่ใช่ไฟล์ที่ส่งออกจากแอปนี้');
       }
     };
     reader.readAsText(file);
@@ -468,7 +536,9 @@
   const HEADER_ROW = ['เดือน (YYYY-MM)', 'เงินเดือน', 'วันที่ออม (YYYY-MM-DD)', 'จำนวนเงิน'];
 
   function baseFilename(){
-    return 'savings-passbook-' + (state.settings.name ? state.settings.name.replace(/\s+/g,'_') : 'data');
+    const raw = (state.settings.name || '').trim();
+    const safe = raw.replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_');
+    return 'savings-passbook-' + (safe || 'data');
   }
   function downloadBlob(blob, filename){
     const url = URL.createObjectURL(blob);
@@ -481,7 +551,7 @@
   }
   function checkSheetLib(){
     if(typeof XLSX === 'undefined'){
-      alert('ไม่สามารถโหลดไลบรารีสำหรับไฟล์ CSV/Excel ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+      showAppAlert('ไม่สามารถโหลดไลบรารีสำหรับไฟล์ CSV/Excel ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
       return false;
     }
     return true;
@@ -563,30 +633,31 @@
         const { settings, months } = parseSheetAOA(aoa);
         applyImportedState(settings, months);
       }catch(err){
-        alert('ไม่สามารถนำเข้าไฟล์ได้: ' + err.message);
+        showAppAlert('ไม่สามารถนำเข้าไฟล์ได้: ' + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
   }
 
-  document.getElementById('exportCsvBtn').addEventListener('click', ()=> exportSheet('csv'));
-  document.getElementById('exportXlsxBtn').addEventListener('click', ()=> exportSheet('xlsx'));
+  $('exportCsvBtn').addEventListener('click', ()=> exportSheet('csv'));
+  $('exportXlsxBtn').addEventListener('click', ()=> exportSheet('xlsx'));
 
-  document.getElementById('importBtn').addEventListener('click', ()=>{
-    document.getElementById('importFile').click();
+  $('importBtn').addEventListener('click', ()=>{
+    $('importFile').click();
   });
-  document.getElementById('importFile').addEventListener('change', (e)=>{
+  $('importFile').addEventListener('change', (e)=>{
     const file = e.target.files[0];
     if(!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
     if(ext === 'json') importJsonFile(file);
     else if(ext === 'csv' || ext === 'xlsx') importSheetFile(file);
-    else alert('รองรับเฉพาะไฟล์ .json, .csv, .xlsx เท่านั้น');
+    else showAppAlert('รองรับเฉพาะไฟล์ .json, .csv, .xlsx เท่านั้น');
     e.target.value = '';
   });
 
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    if(confirm('ล้างข้อมูลทั้งหมด (การตั้งค่าและประวัติการออมทุกเดือน) ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')){
+  $('resetBtn').addEventListener('click', async ()=>{
+    const ok = await showAppConfirm('ล้างข้อมูลทั้งหมด (การตั้งค่าและประวัติการออมทุกเดือน) ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้');
+    if(ok){
       state = { settings:{name:'', percent:10}, months:{} };
       save();
       renderSettings();
@@ -603,7 +674,7 @@
     renderSettings();
     const today = todayIso().slice(0,7);
     populateDropdowns(today);
-    document.getElementById('recordDate').value = todayIso();
+    $('recordDate').value = todayIso();
     renderMonthCard();
     renderSummaryAndLists();
     initTabNav();

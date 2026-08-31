@@ -13,44 +13,26 @@
 </head>
 <body>
 <div class="wrap">
-  
+
   <div class="cover">
     <div class="cover-eyebrow">Savings Passbook</div>
     <h1 id="coverTitle">สมุดบัญชีออมทรัพย์</h1>
     <div class="sub">เป้าหมาย = ผลรวม % เงินเดือนสะสมของทุกเดือน</div>
     <div class="booknum mono" id="bookNumber">เล่มที่ —</div>
+  </div>
 
   <!-- TAB NAV -->
   <nav class="tabnav" id="tabNav" aria-label="เมนูหลัก">
     <button class="tab-btn" data-page="pageHome">🏠 หน้าหลัก</button>
-    <button class="tab-btn" data-page="pageProgress">📈 ความคืบหน้า</button>
     <button class="tab-btn" data-page="pageSummary">📋 สรุป</button>
     <button class="tab-btn" data-page="pageSettings">⚙️ ตั้งค่า</button>
   </nav>
-  </div>
 
   <!-- ============ PAGE: หน้าหลัก ============ -->
   <section class="page" id="pageHome">
 
-        <!-- SUMMARY -->
-    <div class="card" id="summaryCard">
-      <h2><span class="n">1</span> ความคืบหน้าสะสม</h2>
-      <div class="balance-figure mono" id="sumSaved">฿0</div>
-      <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
-
-      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <span class="status-pill" id="statusPill">—</span>
-
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="v mono" id="statMonthsCount">0</div>
-          <div class="l">เดือนที่มีข้อมูล</div>
-        </div>
-        <div class="stat-box">
-          <div class="v mono" id="statRemainAmt">฿0</div>
-          <div class="l">ยอดที่ยังขาด / เกินเป้าหมาย</div>
-        </div>
-      </div>
+    <div class="page-topbar">
+      <button class="btn btn-ghost btn-sm" id="gotoSettingsBtn">⚙️ การตั้งค่า</button>
     </div>
 
     <!-- MONTH SELECT + SALARY -->
@@ -66,7 +48,8 @@
       <input type="number" id="salaryInput" min="0" step="1" placeholder="เช่น 30000">
 
       <div class="suggest-box" id="suggestBox">
-        กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span id="pctLabel">10</span>%)
+        <span id="suggestEmpty">กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span class="pct-value">10</span>%)</span>
+        <span id="suggestFilled" class="hidden">เป้าหมายของเดือนนี้ (<span class="pct-value">10</span>%): <b class="mono" id="suggestedAmount">฿0</b></span>
       </div>
 
       <div class="btn-row">
@@ -91,14 +74,9 @@
       </div>
     </div>
 
-  </section>
-
-  <!-- ============ PAGE: ความคืบหน้า ============ -->
-  <section class="page hidden" id="pageProgress">
-
     <!-- SUMMARY -->
     <div class="card" id="summaryCard">
-      <h2><span class="n">1</span> ความคืบหน้าสะสม</h2>
+      <h2><span class="n">3</span> ความคืบหน้าสะสม</h2>
       <div class="balance-figure mono" id="sumSaved">฿0</div>
       <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
 
@@ -119,7 +97,7 @@
 
     <!-- LEDGER -->
     <div class="card" id="ledgerCard">
-      <h2><span class="n">2</span> สมุดรายการรายเดือน</h2>
+      <h2><span class="n">4</span> สมุดรายการรายเดือน</h2>
       <div class="ledger-head">
         <div>เดือน</div><div>เงินเดือน / เป้าหมาย</div><div style="text-align:right">ออมรวม / สะสม</div><div></div>
       </div>
@@ -155,6 +133,7 @@
       <h2><span class="n">2</span> กราฟเปรียบเทียบรายเดือน</h2>
       <div class="chart-container">
         <canvas id="chartCanvas"></canvas>
+        <div class="empty-note hidden" id="chartFallback">ไม่สามารถโหลดกราฟได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้านี้ใหม่</div>
       </div>
     </div>
 
@@ -197,6 +176,18 @@
 
   </section>
 
+</div>
+
+<!-- THEMED ALERT / CONFIRM MODAL -->
+<div class="app-modal-overlay hidden" id="appModalOverlay">
+  <div class="app-modal">
+    <div class="app-modal-icon" id="appModalIcon">!</div>
+    <p class="app-modal-message" id="appModalMessage"></p>
+    <div class="app-modal-actions">
+      <button class="btn btn-ghost btn-sm hidden" id="appModalCancelBtn">ยกเลิก</button>
+      <button class="btn btn-primary btn-sm" id="appModalOkBtn">ตกลง</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>
