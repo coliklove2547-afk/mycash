@@ -21,132 +21,164 @@
     <div class="booknum mono" id="bookNumber">เล่มที่ —</div>
   </div>
 
-  <!-- SETTINGS -->
-  <div class="card">
-    <h2><span class="n">1</span> ตั้งค่าสมุดออมเงิน</h2>
-    <label for="goalName">ชื่อสมุด (ไม่บังคับ)</label>
-    <input type="text" id="goalName" placeholder="เช่น กองทุนฉุกเฉิน, เงินออมทั่วไป">
+  <!-- TAB NAV -->
+  <nav class="tabnav" id="tabNav" aria-label="เมนูหลัก">
+    <button class="tab-btn" data-page="pageHome">🏠 หน้าหลัก</button>
+    <button class="tab-btn" data-page="pageProgress">📈 ความคืบหน้า</button>
+    <button class="tab-btn" data-page="pageSummary">📋 สรุป</button>
+    <button class="tab-btn" data-page="pageSettings">⚙️ ตั้งค่า</button>
+  </nav>
 
-    <label for="goalPercent">% เงินเดือนที่ตั้งเป้าออมทุกเดือน</label>
-    <input type="number" id="goalPercent" min="1" max="100" value="10">
+  <!-- ============ PAGE: หน้าหลัก ============ -->
+  <section class="page" id="pageHome">
 
-    <div class="btn-row">
-      <button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button>
-    </div>
-  </div>
-
-  <!-- MONTH SELECT + SALARY -->
-  <div class="card">
-    <h2><span class="n">2</span> เลือกเดือน / กรอกเงินเดือน</h2>
-    <label>เดือน / ปี</label>
-    <div class="row2">
-      <select id="monthSelect"></select>
-      <select id="yearSelect"></select>
+    <div class="page-topbar">
+      <button class="btn btn-ghost btn-sm" id="gotoSettingsBtn">⚙️ การตั้งค่า</button>
     </div>
 
-    <label for="salaryInput">เงินเดือนของเดือนนี้ (บาท)</label>
-    <input type="number" id="salaryInput" min="0" step="1" placeholder="เช่น 30000">
-
-    <div class="suggest-box" id="suggestBox">
-      กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span id="pctLabel">10</span>%)
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-primary" id="saveSalaryBtn">บันทึกเงินเดือนเดือนนี้</button>
-      <button class="btn btn-danger btn-sm" id="deleteMonthBtn">ลบข้อมูลเดือนนี้</button>
-    </div>
-  </div>
-
-  <!-- RECORDS FOR SELECTED MONTH -->
-  <div class="card">
-    <h2><span class="n">3</span> บันทึกรายการออมของเดือนนี้</h2>
-    <label>รายการที่ออมแล้วในเดือนนี้</label>
-    <div class="record-list" id="recordList">
-      <div class="empty-msg">ยังไม่มีรายการในเดือนนี้</div>
-    </div>
-
-    <label style="margin-top:12px;">เพิ่มรายการออม</label>
-    <div class="add-record-row">
-      <input type="date" id="recordDate">
-      <input type="number" id="recordAmount" min="0" step="1" placeholder="จำนวนบาท">
-      <button class="btn btn-primary btn-sm" id="addRecordBtn">+ เพิ่ม</button>
-    </div>
-  </div>
-
-  <!-- SUMMARY -->
-  <div class="card hidden" id="summaryCard">
-    <h2><span class="n">4</span> ความคืบหน้าสะสม</h2>
-    <div class="balance-figure mono" id="sumSaved">฿0</div>
-    <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
-
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <span class="status-pill" id="statusPill">—</span>
-
-    <div class="stat-grid">
-      <div class="stat-box">
-        <div class="v mono" id="statMonthsCount">0</div>
-        <div class="l">เดือนที่มีข้อมูล</div>
+    <!-- MONTH SELECT + SALARY -->
+    <div class="card" id="monthCard">
+      <h2><span class="n">1</span> เลือกเดือน / กรอกเงินเดือน</h2>
+      <label>เดือน / ปี</label>
+      <div class="row2">
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
       </div>
-      <div class="stat-box">
-        <div class="v mono" id="statRemainAmt">฿0</div>
-        <div class="l">ยอดที่ยังขาด / เกินเป้าหมาย</div>
+
+      <label for="salaryInput">เงินเดือนของเดือนนี้ (บาท)</label>
+      <input type="number" id="salaryInput" min="0" step="1" placeholder="เช่น 30000">
+
+      <div class="suggest-box" id="suggestBox">
+        กรอกเงินเดือนเพื่อดูเป้าหมายของเดือนนี้ (<span id="pctLabel">10</span>%)
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="saveSalaryBtn">บันทึกเงินเดือนเดือนนี้</button>
+        <button class="btn btn-danger btn-sm" id="deleteMonthBtn">ลบข้อมูลเดือนนี้</button>
       </div>
     </div>
-  </div>
 
-  <!-- LEDGER -->
-  <div class="card hidden" id="ledgerCard">
-    <h2><span class="n">5</span> สมุดรายการรายเดือน</h2>
-    <div class="ledger-head">
-      <div>เดือน</div><div>เงินเดือน / เป้าหมาย</div><div style="text-align:right">ออมรวม / สะสม</div><div></div>
-    </div>
-    <div id="ledgerBody"></div>
-  </div>
+    <!-- RECORDS FOR SELECTED MONTH -->
+    <div class="card" id="recordsCard">
+      <h2><span class="n">2</span> บันทึกรายการออมของเดือนนี้</h2>
+      <label>รายการที่ออมแล้วในเดือนนี้</label>
+      <div class="record-list" id="recordList">
+        <div class="empty-msg">ยังไม่มีรายการในเดือนนี้</div>
+      </div>
 
-  <!-- OVERVIEW TABLE -->
-  <div class="card hidden" id="overviewCard">
-    <h2><span class="n">6</span> ภาพรวมทุกเดือน</h2>
-    <div style="overflow-x:auto;">
-      <table class="overview-table">
-        <thead>
-          <tr>
-            <th>เดือน</th>
-            <th class="text-right">เงินเดือน</th>
-            <th class="text-right">เป้าหมาย</th>
-            <th class="text-right">ออมจริง</th>
-            <th class="text-right">%</th>
-          </tr>
-        </thead>
-        <tbody id="overviewTableBody"></tbody>
-      </table>
+      <label style="margin-top:12px;">เพิ่มรายการออม</label>
+      <div class="add-record-row">
+        <input type="date" id="recordDate">
+        <input type="number" id="recordAmount" min="0" step="1" placeholder="จำนวนบาท">
+        <button class="btn btn-primary btn-sm" id="addRecordBtn">+ เพิ่ม</button>
+      </div>
     </div>
-  </div>
 
-  <!-- CHART -->
-  <div class="card hidden" id="chartCard">
-    <h2><span class="n">7</span> กราฟเปรียบเทียบรายเดือน</h2>
-    <div class="chart-container">
-      <canvas id="chartCanvas"></canvas>
-    </div>
-  </div>
+  </section>
 
-  <!-- DATA TOOLS -->
-  <div class="card" id="dataCard">
-    <h2><span class="n">8</span> จัดการข้อมูล</h2>
-    <div class="footer-row">
-      <button class="btn btn-ghost btn-sm" id="refreshBtn">🔄 รีเฟรชข้อมูล</button>
+  <!-- ============ PAGE: ความคืบหน้า ============ -->
+  <section class="page hidden" id="pageProgress">
+
+    <!-- SUMMARY -->
+    <div class="card" id="summaryCard">
+      <h2><span class="n">1</span> ความคืบหน้าสะสม</h2>
+      <div class="balance-figure mono" id="sumSaved">฿0</div>
+      <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
+
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="status-pill" id="statusPill">—</span>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="v mono" id="statMonthsCount">0</div>
+          <div class="l">เดือนที่มีข้อมูล</div>
+        </div>
+        <div class="stat-box">
+          <div class="v mono" id="statRemainAmt">฿0</div>
+          <div class="l">ยอดที่ยังขาด / เกินเป้าหมาย</div>
+        </div>
+      </div>
     </div>
-    <div class="footer-row">
-      <button class="btn btn-gold btn-sm" id="exportJsonBtn">ส่งออก JSON</button>
-      <button class="btn btn-gold btn-sm" id="exportCsvBtn">ส่งออก CSV</button>
-      <button class="btn btn-gold btn-sm" id="exportXlsxBtn">ส่งออก Excel (.xlsx)</button>
+
+    <!-- LEDGER -->
+    <div class="card" id="ledgerCard">
+      <h2><span class="n">2</span> สมุดรายการรายเดือน</h2>
+      <div class="ledger-head">
+        <div>เดือน</div><div>เงินเดือน / เป้าหมาย</div><div style="text-align:right">ออมรวม / สะสม</div><div></div>
+      </div>
+      <div id="ledgerBody"></div>
     </div>
-    <div class="footer-row">
-      <button class="btn btn-ghost btn-sm" id="importBtn">นำเข้าไฟล์ (.json / .csv / .xlsx)</button>
-      <button class="btn btn-danger btn-sm" id="resetBtn">ล้างข้อมูลทั้งหมด</button>
-      <input type="file" id="importFile" accept=".json,.csv,.xlsx,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
+  </section>
+
+  <!-- ============ PAGE: สรุป ============ -->
+  <section class="page hidden" id="pageSummary">
+
+    <!-- OVERVIEW TABLE -->
+    <div class="card" id="overviewCard">
+      <h2><span class="n">1</span> ภาพรวมทุกเดือน</h2>
+      <div style="overflow-x:auto;">
+        <table class="overview-table">
+          <thead>
+            <tr>
+              <th>เดือน</th>
+              <th class="text-right">เงินเดือน</th>
+              <th class="text-right">เป้าหมาย</th>
+              <th class="text-right">ออมจริง</th>
+              <th class="text-right">%</th>
+            </tr>
+          </thead>
+          <tbody id="overviewTableBody"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
+
+    <!-- CHART -->
+    <div class="card" id="chartCard">
+      <h2><span class="n">2</span> กราฟเปรียบเทียบรายเดือน</h2>
+      <div class="chart-container">
+        <canvas id="chartCanvas"></canvas>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ PAGE: ตั้งค่า ============ -->
+  <section class="page hidden" id="pageSettings">
+
+    <!-- SETTINGS -->
+    <div class="card" id="settingsCard">
+      <h2><span class="n">1</span> ตั้งค่าสมุดออมเงิน</h2>
+      <label for="goalName">ชื่อสมุด (ไม่บังคับ)</label>
+      <input type="text" id="goalName" placeholder="เช่น กองทุนฉุกเฉิน, เงินออมทั่วไป">
+
+      <label for="goalPercent">% เงินเดือนที่ตั้งเป้าออมทุกเดือน</label>
+      <input type="number" id="goalPercent" min="1" max="100" value="10">
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+
+    <!-- DATA TOOLS -->
+    <div class="card" id="dataCard">
+      <h2><span class="n">2</span> จัดการข้อมูล</h2>
+      <div class="footer-row">
+        <button class="btn btn-ghost btn-sm" id="refreshBtn">🔄 รีเฟรชข้อมูล</button>
+      </div>
+      <div class="footer-row">
+        <button class="btn btn-gold btn-sm" id="exportJsonBtn">ส่งออก JSON</button>
+        <button class="btn btn-gold btn-sm" id="exportCsvBtn">ส่งออก CSV</button>
+        <button class="btn btn-gold btn-sm" id="exportXlsxBtn">ส่งออก Excel (.xlsx)</button>
+      </div>
+      <div class="footer-row">
+        <button class="btn btn-ghost btn-sm" id="importBtn">นำเข้าไฟล์ (.json / .csv / .xlsx)</button>
+        <button class="btn btn-danger btn-sm" id="resetBtn">ล้างข้อมูลทั้งหมด</button>
+        <input type="file" id="importFile" accept=".json,.csv,.xlsx,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      </div>
+    </div>
+
+  </section>
 
 </div>
 

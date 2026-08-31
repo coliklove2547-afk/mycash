@@ -188,11 +188,6 @@
 
   function renderSummaryAndLists(){
     const keys = activeMonthKeys();
-    const hasAny = keys.length > 0;
-    ['summaryCard','ledgerCard','overviewCard','chartCard'].forEach(id=>{
-      document.getElementById(id).classList.toggle('hidden', !hasAny);
-    });
-    if(!hasAny) return;
 
     const target = totalTarget();
     const saved = totalSaved();
@@ -232,6 +227,10 @@
   function renderLedger(keys){
     const body = document.getElementById('ledgerBody');
     body.innerHTML = '';
+    if(keys.length === 0){
+      body.innerHTML = '<div class="empty-note">ยังไม่มีข้อมูล กรุณากรอกเงินเดือนหรือเพิ่มรายการออมในหน้าหลักก่อน</div>';
+      return;
+    }
     let cum = 0;
     keys.forEach(key=>{
       const salary = state.months[key].salary;
@@ -263,6 +262,10 @@
 
   function renderOverview(keys){
     const tbody = document.getElementById('overviewTableBody');
+    if(keys.length === 0){
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">ยังไม่มีข้อมูล</td></tr>';
+      return;
+    }
     tbody.innerHTML = keys.map(key=>{
       const salary = state.months[key].salary;
       const tgt = monthTarget(key);
@@ -314,7 +317,7 @@
     document.getElementById('yearSelect').value = y;
     populateMonths(key);
     renderMonthCard();
-    window.scrollTo({ top: document.getElementById('salaryInput').closest('.card').offsetTop - 12, behavior:'smooth' });
+    showPage('pageHome');
   }
 
   // ---------- events ----------
@@ -391,6 +394,25 @@
     wrap.innerHTML = '<div class="stamp-mark">ออมแล้ว<br>' + new Date().toLocaleDateString('th-TH') + '</div>';
     document.body.appendChild(wrap);
     setTimeout(()=> wrap.remove(), 650);
+  }
+
+  // ---------- tab navigation ----------
+  const PAGE_IDS = ['pageHome', 'pageProgress', 'pageSummary', 'pageSettings'];
+  function showPage(pageId){
+    PAGE_IDS.forEach(id=>{
+      document.getElementById(id).classList.toggle('hidden', id !== pageId);
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.page === pageId);
+    });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  function initTabNav(){
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> showPage(btn.dataset.page));
+    });
+    document.getElementById('gotoSettingsBtn').addEventListener('click', ()=> showPage('pageSettings'));
+    showPage('pageHome');
   }
 
   // ---------- refresh ----------
@@ -584,6 +606,7 @@
     document.getElementById('recordDate').value = todayIso();
     renderMonthCard();
     renderSummaryAndLists();
+    initTabNav();
   }
   init();
 })();
