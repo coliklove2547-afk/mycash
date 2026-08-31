@@ -54,8 +54,30 @@ body{
   margin-top:14px; font-size:11px; color:#8FA093; letter-spacing:.05em;
 }
 
+/* Tab nav */
+.tabnav{
+  display:flex; gap:6px; margin-top:10px; padding:4px 2px 0;
+}
+.tab-btn{
+  flex:1 1 0;
+  appearance:none; border:1px solid rgba(27,67,50,0.18); background:var(--card);
+  color:var(--forest); font-family:'Sarabun',sans-serif; font-weight:600; font-size:12px;
+  padding:9px 4px; border-radius:9px; cursor:pointer; white-space:nowrap; text-align:center;
+  box-shadow:0 1px 4px rgba(27,67,50,0.08);
+  transition: background .15s ease, color .15s ease, transform .08s ease;
+}
+.tab-btn:active{ transform:scale(0.96); }
+.tab-btn.active{
+  background:var(--forest); color:#F3EFDD; border-color:var(--forest);
+}
+
+.page-topbar{
+  display:flex; justify-content:flex-end; margin-top:14px;
+}
+
 /* Cards */
 .card{
+  scroll-margin-top: 14px;
   background:var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
