@@ -13,13 +13,12 @@
 </head>
 <body>
 <div class="wrap">
-
+  
   <div class="cover">
     <div class="cover-eyebrow">Savings Passbook</div>
     <h1 id="coverTitle">สมุดบัญชีออมทรัพย์</h1>
     <div class="sub">เป้าหมาย = ผลรวม % เงินเดือนสะสมของทุกเดือน</div>
     <div class="booknum mono" id="bookNumber">เล่มที่ —</div>
-  </div>
 
   <!-- TAB NAV -->
   <nav class="tabnav" id="tabNav" aria-label="เมนูหลัก">
@@ -28,12 +27,30 @@
     <button class="tab-btn" data-page="pageSummary">📋 สรุป</button>
     <button class="tab-btn" data-page="pageSettings">⚙️ ตั้งค่า</button>
   </nav>
+  </div>
 
   <!-- ============ PAGE: หน้าหลัก ============ -->
   <section class="page" id="pageHome">
 
-    <div class="page-topbar">
-      <button class="btn btn-ghost btn-sm" id="gotoSettingsBtn">⚙️ การตั้งค่า</button>
+        <!-- SUMMARY -->
+    <div class="card" id="summaryCard">
+      <h2><span class="n">1</span> ความคืบหน้าสะสม</h2>
+      <div class="balance-figure mono" id="sumSaved">฿0</div>
+      <div class="balance-label">ออมสะสมแล้ว จากเป้าหมายสะสม <span id="sumTarget" class="mono">฿0</span></div>
+
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="status-pill" id="statusPill">—</span>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="v mono" id="statMonthsCount">0</div>
+          <div class="l">เดือนที่มีข้อมูล</div>
+        </div>
+        <div class="stat-box">
+          <div class="v mono" id="statRemainAmt">฿0</div>
+          <div class="l">ยอดที่ยังขาด / เกินเป้าหมาย</div>
+        </div>
+      </div>
     </div>
 
     <!-- MONTH SELECT + SALARY -->
