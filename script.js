@@ -680,4 +680,11 @@
     initTabNav();
   }
   init();
+
+  // ---------- PWA: register service worker (requires http/https, not file://) ----------
+  if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{ /* silent: offline install just won't be available */ });
+    });
+  }
 })();
